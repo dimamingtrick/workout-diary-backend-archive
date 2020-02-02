@@ -1,48 +1,63 @@
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
 const { UserModel } = require("../models");
-const { validateEmail } = require("../helpers");
-const { PASSWORD_HASH, JWT_PRIVATE_KEY } = require("../config");
+const { validateEmail, generateJwt } = require("../helpers");
 
-class UserError {
+class AuthError {
   constructor(field, message) {
     this.field = field;
     this.message = message;
   }
 }
 
+/**
+ * GET "/me"
+ * jwtMiddleware
+ * Returns current user by jwt
+ */
+exports.getMe = async (req, res) => {
+  try {
+    const user = await UserModel.findById(req.body.userId);
+    res.send({ user });
+  } catch (err) {
+    res.status(400).json({ message: err.message || "Error, try again" });
+  }
+};
+
+/**
+ * POST "/signup"
+ */
 exports.signup = async (req, res) => {
   try {
     const { email, name, password, confirmPassword } = req.body;
 
     let errors = [];
     if (!email) {
-      errors.push(new UserError("email", "Email is required"));
+      errors.push(new AuthError("email", "Email is required"));
     }
 
     if (email && !validateEmail(email)) {
-      errors.push(new UserError("email", "Email is not valid"));
+      errors.push(new AuthError("email", "Email is not valid"));
     }
 
     const emailInUse = await UserModel.findOne({ email });
     if (emailInUse) {
-      errors.push(new UserError("email", "Email is already in usage"));
+      errors.push(new AuthError("email", "Email is already in usage"));
     }
 
     if (!name) {
-      errors.push(new UserError("name", "Name is required"));
+      errors.push(new AuthError("name", "Name is required"));
     }
 
     if (!password) {
-      errors.push(new UserError("password", "Password is required"));
+      errors.push(new AuthError("password", "Password is required"));
     }
 
     if (!confirmPassword) {
-      errors.push(new UserError("confirmPassword", "Confirm your password"));
+      errors.push(new AuthError("confirmPassword", "Confirm your password"));
     }
 
     if (password && confirmPassword && password !== confirmPassword) {
-      errors.push(new UserError("confirmPassword", "Passwords doesn't match"));
+      errors.push(new AuthError("confirmPassword", "Passwords doesn't match"));
     }
 
     if (errors.length > 0) {
@@ -68,9 +83,7 @@ exports.signup = async (req, res) => {
       throw err;
     }
 
-    const token = jwt.sign({ _id: user._id }, JWT_PRIVATE_KEY, {
-      expiresIn: "1h"
-    });
+    const token = generateJwt(user._id);
 
     const userObject = user.toObject(); // Convert user into object to remove password before sending response
     delete userObject.password;
@@ -78,15 +91,55 @@ exports.signup = async (req, res) => {
     return res.json({ user: userObject, token });
   } catch (err) {
     console.log(err);
-    return res.status(400).json({ message: "Error, try again later" });
+    return res.status(400).json({ message: err.message || "Error, try again" });
   }
 };
 
+/**
+ * POST "/signin"
+ * Sign in by email and password
+ */
 exports.signin = async (req, res) => {
-  console.log("hey", req.body);
   try {
-    res.json({ message: "Sign in" });
+    const { email, password } = req.body;
+
+    let errors = [];
+    if (!email) {
+      errors.push(new AuthError("email", "Email is required"));
+    }
+
+    if (email && !validateEmail(email)) {
+      errors.push(new AuthError("email", "Email is not valid"));
+    }
+
+    if (!password) {
+      errors.push(new AuthError("password", "Password is required"));
+    }
+
+    if (errors.length > 0) {
+      return res.status(400).json(errors);
+    }
+
+    const user = await UserModel.findOne({ email }).select("+password");
+
+    if (!user) return res.status(404).json({ message: "User doesn't exist" });
+
+    const isValidPassword = await bcrypt.compare(password, user.password);
+
+    if (!isValidPassword) {
+      return res
+        .status(400)
+        .json([new AuthError("password", "Wrong password")]);
+    }
+
+    const token = generateJwt(user._id);
+
+    const userData = user.toObject(); // Convert user into object to remove password before sending response
+    delete userData.password;
+
+    res.json({ user: userData, token });
   } catch (err) {
     console.log(err);
+    res.json({ message: err.message || "Error, try again" });
   }
 };
