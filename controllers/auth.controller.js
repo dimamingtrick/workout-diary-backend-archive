@@ -122,7 +122,10 @@ exports.signin = async (req, res) => {
 
     const user = await UserModel.findOne({ email }).select("+password");
 
-    if (!user) return res.status(404).json({ message: "User doesn't exist" });
+    if (!user)
+      return res
+        .status(404)
+        .json([new AuthError("email", "User doesn't exist")]);
 
     const isValidPassword = await bcrypt.compare(password, user.password);
 
@@ -139,7 +142,6 @@ exports.signin = async (req, res) => {
 
     res.json({ user: userData, token });
   } catch (err) {
-    console.log(err);
-    res.json({ message: err.message || "Error, try again" });
+    res.status(400).json({ message: err.message || "Error, try again" });
   }
 };
