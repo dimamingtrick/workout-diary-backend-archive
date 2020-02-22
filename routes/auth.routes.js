@@ -6,8 +6,8 @@ const router = Router();
 
 router.get("/me", jwtMiddleware, AuthController.getMe);
 
-router.post("/signup", AuthController.signup);
+router.post("/sign-up", AuthController.signUp);
 
-router.post("/signin", AuthController.signin);
+router.post("/sign-in", AuthController.signIn);
 
 module.exports = router;

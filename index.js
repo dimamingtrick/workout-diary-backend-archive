@@ -39,7 +39,7 @@ async function start() {
       console.log(`Server is working on port ${PORT}`);
 
       io.on("connection", socket => {
-        app.set("socket", socker);
+        app.set("socket", socket);
       });
     });
   } catch (err) {

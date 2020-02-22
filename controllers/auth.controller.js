@@ -24,9 +24,9 @@ exports.getMe = async (req, res) => {
 };
 
 /**
- * POST "/signup"
+ * POST "/sign-up"
  */
-exports.signup = async (req, res) => {
+exports.signUp = async (req, res) => {
   try {
     const { email, name, password, confirmPassword } = req.body;
 
@@ -96,10 +96,10 @@ exports.signup = async (req, res) => {
 };
 
 /**
- * POST "/signin"
+ * POST "/sign-in"
  * Sign in by email and password
  */
-exports.signin = async (req, res) => {
+exports.signIn = async (req, res) => {
   try {
     const { email, password } = req.body;
 

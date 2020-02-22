@@ -9,6 +9,6 @@ module.exports.validateEmail = email => {
 
 module.exports.generateJwt = _id => {
   return jwt.sign({ _id }, JWT_PRIVATE_KEY, {
-    expiresIn: "1h"
+    expiresIn: "10h"
   });
 };
