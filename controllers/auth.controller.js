@@ -68,7 +68,7 @@ exports.signUp = async (req, res) => {
     try {
       hashedPassword = await bcrypt.hash(password, 10);
     } catch (error) {
-      throw error;
+      return res.status(400).json({ message: error.message });
     }
 
     const user = new UserModel({
@@ -79,8 +79,8 @@ exports.signUp = async (req, res) => {
 
     try {
       await user.save();
-    } catch (err) {
-      throw err;
+    } catch (error) {
+      return res.status(400).json({ message: error.message });
     }
 
     const token = generateJwt(user._id);

@@ -6,6 +6,7 @@ const cors = require("cors");
 const app = express();
 const server = require("http").Server(app);
 const io = require("socket.io")(server);
+const { jwtMiddleware } = require("./middlewares");
 
 const PORT = process.env.PORT || 3001;
 const DB_URL = process.env.DB_URL || "mongodb://localhost:27017/workout-diary";
@@ -13,11 +14,14 @@ const DB_URL = process.env.DB_URL || "mongodb://localhost:27017/workout-diary";
 app.set("socket.io");
 
 app.use(cors());
-
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+/**
+ * API routes
+ */
 app.use(require("./routes/auth.routes"));
+app.use("/workout", jwtMiddleware, require("./routes/workout.routes"));
 
 app.get("/", (req, res) => {
   res.send("YEAH BOY");
