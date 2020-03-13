@@ -2,7 +2,7 @@ const { verify } = require("jsonwebtoken");
 const { JWT_PRIVATE_KEY } = require("../config");
 
 module.exports = (req, res, next) => {
-  verify(req.headers["token"], JWT_PRIVATE_KEY, (err, decoded) => {
+  verify(req.headers.token, JWT_PRIVATE_KEY, (err, decoded) => {
     if (err) {
       return res.status(400).json({ status: "error", message: err.message });
     }

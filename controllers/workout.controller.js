@@ -6,6 +6,45 @@ const {
 } = require("../models");
 
 /**
+ * GET /workout
+ * jwtMiddleware
+ * returns list of users workouts
+ */
+exports.getWorkoutsList = async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    const workouts = await WorkoutModel.find({ user: userId })
+      .populate("exercises")
+      .exec();
+
+    res.json({ workouts });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json({ message: err.message });
+  }
+};
+
+/**
+ * GET /workout/:id
+ * jwtMiddleware
+ * return single workout by id
+ */
+exports.getWorkout = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const workout = await WorkoutModel.findById(id)
+      .populate("exercises")
+      .exec();
+
+    res.json({ workout });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+/**
  * POST /workout/finish
  * jwtMiddleware
  * returns new created workout object
@@ -28,6 +67,20 @@ exports.finishWorkout = async (req, res) => {
       return res
         .status(400)
         .json({ message: "Do some exercies before you finish workout" });
+    }
+
+    const allExercisesHaveName = exercises.every(exercise => !!exercise.name);
+    if (!allExercisesHaveName) {
+      return res.status(400).json({ message: "Name all exercises" });
+    }
+
+    const allExercisesHaveSets = exercises.every(
+      exercise => exercise.sets && exercise.sets > 0
+    );
+    if (!allExercisesHaveSets) {
+      return res
+        .status(400)
+        .json({ message: "Add at least 1 set to every exercise" });
     }
 
     try {
